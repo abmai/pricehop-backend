@@ -17,6 +17,18 @@ describe("BrandDetector", () => {
 		expect(result).toBe("cartier");
 	});
 
+	test("detects a supported brand from a seeded regional hostname", async () => {
+		const runtime = createAppRuntime();
+
+		const result = await runtime.runPromise(
+			Effect.flatMap(BrandDetector, (service) =>
+				service.detect("https://www.tiffany.co.kr/jewelry/bracelets/item-123"),
+			),
+		);
+
+		expect(result).toBe("tiffany");
+	});
+
 	test("returns UnsupportedBrandError for unknown hostnames", async () => {
 		const runtime = createAppRuntime();
 

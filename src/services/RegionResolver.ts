@@ -1,16 +1,16 @@
 import { Context, Effect, Layer } from "effect";
 
 import type { Brand } from "../domain/brands";
-import { ScrapingError } from "../domain/errors";
-import { getRegionalSiteEntry } from "../domain/regionalSites";
+import { CacheError, ScrapingError } from "../domain/errors";
 import type { Region } from "../domain/regions";
+import type { ConvexClientService } from "../lib/convexEffect";
 
 export interface RegionResolverApi {
 	resolve: (
 		productUrl: string,
 		brand: Brand,
 		region: Region,
-	) => Effect.Effect<string, ScrapingError>;
+	) => Effect.Effect<string, ScrapingError | CacheError>;
 }
 
 export const RegionResolver = Context.GenericTag<RegionResolverApi>("pricehop/RegionResolver");
@@ -29,42 +29,58 @@ const joinPath = (...parts: string[]): string => {
 	return normalized.length === 0 ? "/" : `/${normalized.join("/")}`;
 };
 
-export const makeRegionResolver = (): RegionResolverApi => ({
+export const makeRegionResolver = (convexClient: ConvexClientService): RegionResolverApi => ({
 	resolve: (productUrl, brand, region) =>
-		Effect.try({
-			try: () => {
-				const entry = getRegionalSiteEntry(brand, region);
-				if (!entry) {
-					throw new ScrapingError({
+		Effect.gen(function* () {
+			const brandRecord = yield* convexClient.getBrandByName(brand);
+			if (!brandRecord) {
+				return yield* Effect.fail(
+					new ScrapingError({
+						url: productUrl,
+						cause: `No brand mapping for ${brand}`,
+					}),
+				);
+			}
+
+			const entry = yield* convexClient.getBrandUrlByBrandIdAndRegion(brandRecord.id, region);
+			if (!entry) {
+				return yield* Effect.fail(
+					new ScrapingError({
 						url: productUrl,
 						cause: `No regional site mapping for ${brand} ${region}`,
-					});
-				}
+					}),
+				);
+			}
 
-				const sourceUrl = new URL(productUrl);
-				const targetUrl = new URL(entry.baseUrl);
-				const sourcePath = sourceUrl.pathname || "/";
+			return yield* Effect.try({
+				try: () => {
+					const sourceUrl = new URL(productUrl);
+					const targetUrl = new URL(entry.baseUrl);
+					const sourcePath = sourceUrl.pathname || "/";
 
-				targetUrl.pathname =
-					entry.urlTransform === "locale-prefix"
-						? joinPath(targetUrl.pathname, entry.localePrefix ?? "", stripLocalePrefix(sourcePath))
-						: joinPath(targetUrl.pathname, sourcePath);
-				targetUrl.search = "";
-				targetUrl.hash = "";
+					targetUrl.pathname =
+						entry.urlTransform === "locale-prefix"
+							? joinPath(
+									targetUrl.pathname,
+									entry.localePrefix ?? "",
+									stripLocalePrefix(sourcePath),
+								)
+							: joinPath(targetUrl.pathname, sourcePath);
+					targetUrl.search = "";
+					targetUrl.hash = "";
 
-				return targetUrl.toString();
-			},
-			catch: (cause) =>
-				cause instanceof ScrapingError
-					? cause
-					: new ScrapingError({
-							url: productUrl,
-							cause,
-						}),
+					return targetUrl.toString();
+				},
+				catch: (cause) =>
+					new ScrapingError({
+						url: productUrl,
+						cause,
+					}),
+			});
 		}),
 });
 
-export const RegionResolverLive = Layer.succeed(RegionResolver, makeRegionResolver());
-
-export const createRegionResolverLayer = (resolver?: RegionResolverApi) =>
-	Layer.succeed(RegionResolver, resolver ?? makeRegionResolver());
+export const createRegionResolverLayer = (
+	resolver: RegionResolverApi | undefined,
+	convexClient: ConvexClientService,
+) => Layer.succeed(RegionResolver, resolver ?? makeRegionResolver(convexClient));
