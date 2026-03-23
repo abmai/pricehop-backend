@@ -71,15 +71,27 @@ Tables and logical entities:
   - `currency`
   - `rateToUsd`
   - `fetchedAt`
+- `brands`
+  - `name`
+  - `baseHost`
+- `brand_urls`
+  - `brandId`
+  - `region`
+  - `baseUrl`
+  - `urlTransform`
+  - `localePrefix`
+  - `searchPattern`
 
 ## Service Boundaries
 
 - `UrlNormalizer`: canonicalizes user-submitted URLs
-- `BrandDetector`: resolves a supported brand from hostname
+- `BrandDetector`: resolves a supported brand from seeded `brands` and
+  `brand_urls` hostnames
 - `PriceLookup`: loads products and prices, computes freshness
 - `IndexingJobService`: creates or reuses active jobs and fetches status
 - `CurrencyConverter`: converts local amounts into USD
 - `ExchangeRateService`: reads cached FX rates
+- `RegionResolver`: resolves regional product URLs from seeded `brand_urls`
 
 ## Freshness Model
 
@@ -101,7 +113,8 @@ Errors are modeled as tagged domain errors and translated to HTTP responses:
 
 ## Storage Strategy
 
-This iteration uses storage abstractions that mirror the planned Convex schema.
-That keeps the request and pipeline code aligned with the long-term design while
-remaining testable in isolation. The `convex/` directory documents the intended
-schema and query surfaces for later replacement with real Convex functions.
+This iteration now uses a real Convex `defineSchema` in [convex/schema.ts](/Users/abmai/conductor/workspaces/pricehop-backend/damascus/convex/schema.ts)
+while keeping exported record interfaces for the in-memory store. The
+in-memory store auto-seeds supported brands and regional URL rules so the app
+runtime, unit tests, and end-to-end tests all exercise the same data-backed
+brand detection and region resolution flow.

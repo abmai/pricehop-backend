@@ -16,6 +16,7 @@ import { makeRegionResolver } from "../../../src/services/RegionResolver";
 describe("IndexingWorker", () => {
 	test("stores successful and unavailable regional results and completes the job", async () => {
 		const store = createInMemoryConvexStore();
+		const convexClient = makeInMemoryConvexClient(store);
 		const product = getOrCreateProduct(store, {
 			normalizedUrl: "https://www.tiffany.com/jewelry/bracelets/item-123.html",
 			brand: "tiffany",
@@ -32,8 +33,8 @@ describe("IndexingWorker", () => {
 		});
 
 		const worker = makeIndexingWorker(
-			makeInMemoryConvexClient(store),
-			makeRegionResolver(),
+			convexClient,
+			makeRegionResolver(convexClient),
 			new MockPageFetcher({
 				fallback: (url) => `<html><body>${url}</body></html>`,
 			}),
@@ -61,7 +62,7 @@ describe("IndexingWorker", () => {
 					throw new Error("captcha blocked");
 				},
 			}),
-			makeCurrencyConverter(makeExchangeRateService(makeInMemoryConvexClient(store))),
+			makeCurrencyConverter(makeExchangeRateService(convexClient)),
 		);
 
 		await Effect.runPromise(Effect.either(worker.processJob(job.id)));
@@ -83,6 +84,7 @@ describe("IndexingWorker", () => {
 
 	test("fails the job when every region fails", async () => {
 		const store = createInMemoryConvexStore();
+		const convexClient = makeInMemoryConvexClient(store);
 		const product = getOrCreateProduct(store, {
 			normalizedUrl: "https://www.tiffany.com/jewelry/bracelets/item-123.html",
 			brand: "tiffany",
@@ -94,11 +96,11 @@ describe("IndexingWorker", () => {
 		});
 
 		const worker = makeIndexingWorker(
-			makeInMemoryConvexClient(store),
-			makeRegionResolver(),
+			convexClient,
+			makeRegionResolver(convexClient),
 			new MockPageFetcher(),
 			new MockPriceExtractor(),
-			makeCurrencyConverter(makeExchangeRateService(makeInMemoryConvexClient(store))),
+			makeCurrencyConverter(makeExchangeRateService(convexClient)),
 		);
 
 		const outcome = await Effect.runPromise(Effect.either(worker.processJob(job.id)));

@@ -2,7 +2,7 @@ import { Layer, ManagedRuntime } from "effect";
 
 import { createInMemoryConvexStore, type InMemoryConvexStore } from "../convex/store";
 import { ConvexClient, makeInMemoryConvexClient } from "./lib/convexEffect";
-import { BrandDetectorLive } from "./services/BrandDetector";
+import { BrandDetector, makeBrandDetector } from "./services/BrandDetector";
 import { createCurrencyConverterLayer } from "./services/CurrencyConverter";
 import { createExchangeRateLayer, makeExchangeRateService } from "./services/ExchangeRateService";
 import { createIndexingJobLayer } from "./services/IndexingJobService";
@@ -32,13 +32,13 @@ export const makeAppLayer = (options: AppEnvironmentOptions = {}) => {
 	const exchangeRates = makeExchangeRateService(convexClient);
 	const baseLayer = Layer.mergeAll(
 		UrlNormalizerLive,
-		BrandDetectorLive,
 		Layer.succeed(ConvexClient, convexClient),
+		Layer.succeed(BrandDetector, makeBrandDetector(convexClient)),
 		createExchangeRateLayer(convexClient),
 		createCurrencyConverterLayer(exchangeRates),
 		createPriceLookupLayer(convexClient),
 		createIndexingJobLayer(convexClient),
-		createRegionResolverLayer(options.regionResolver),
+		createRegionResolverLayer(options.regionResolver, convexClient),
 		createPageFetcherLayer(options.pageFetcher),
 		createPriceExtractorLayer(options.priceExtractor),
 	);

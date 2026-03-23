@@ -1,5 +1,18 @@
 import { Context, Effect } from "effect";
 
+import {
+	createBrand,
+	getAllBrands,
+	getBrandByName,
+	type CreateBrandInput,
+} from "../../convex/brands";
+import {
+	createBrandUrl,
+	getAllBrandUrls,
+	getBrandUrlByBrandIdAndRegion,
+	getBrandUrlsByBrandId,
+	type CreateBrandUrlInput,
+} from "../../convex/brandUrls";
 import { getExchangeRateByCurrency, setExchangeRate } from "../../convex/exchangeRates";
 import {
 	createIndexingJob,
@@ -19,6 +32,8 @@ import { createInMemoryConvexStore, type InMemoryConvexStore } from "../../conve
 import { CacheError } from "../domain/errors";
 import type { CurrencyCode, Region } from "../domain/regions";
 import type {
+	BrandRecord,
+	BrandUrlRecord,
 	ExchangeRateRecord,
 	IndexingJobRecord,
 	ProductRecord,
@@ -60,6 +75,16 @@ export interface ConvexClientService {
 		currency: CurrencyCode,
 	) => Effect.Effect<ExchangeRateRecord | undefined, CacheError>;
 	setExchangeRate: (record: ExchangeRateRecord) => Effect.Effect<ExchangeRateRecord, CacheError>;
+	getAllBrands: () => Effect.Effect<BrandRecord[], CacheError>;
+	getBrandByName: (name: string) => Effect.Effect<BrandRecord | undefined, CacheError>;
+	createBrand: (input: CreateBrandInput) => Effect.Effect<BrandRecord, CacheError>;
+	getAllBrandUrls: () => Effect.Effect<BrandUrlRecord[], CacheError>;
+	getBrandUrlsByBrandId: (brandId: string) => Effect.Effect<BrandUrlRecord[], CacheError>;
+	getBrandUrlByBrandIdAndRegion: (
+		brandId: string,
+		region: Region,
+	) => Effect.Effect<BrandUrlRecord | undefined, CacheError>;
+	createBrandUrl: (input: CreateBrandUrlInput) => Effect.Effect<BrandUrlRecord, CacheError>;
 }
 
 export const ConvexClient = Context.GenericTag<ConvexClientService>("pricehop/ConvexClient");
@@ -109,4 +134,16 @@ export const makeInMemoryConvexClient = (
 		),
 	setExchangeRate: (record) =>
 		wrapCacheOperation("setExchangeRate", () => setExchangeRate(store, record)),
+	getAllBrands: () => wrapCacheOperation("getAllBrands", () => getAllBrands(store)),
+	getBrandByName: (name) => wrapCacheOperation("getBrandByName", () => getBrandByName(store, name)),
+	createBrand: (input) => wrapCacheOperation("createBrand", () => createBrand(store, input)),
+	getAllBrandUrls: () => wrapCacheOperation("getAllBrandUrls", () => getAllBrandUrls(store)),
+	getBrandUrlsByBrandId: (brandId) =>
+		wrapCacheOperation("getBrandUrlsByBrandId", () => getBrandUrlsByBrandId(store, brandId)),
+	getBrandUrlByBrandIdAndRegion: (brandId, region) =>
+		wrapCacheOperation("getBrandUrlByBrandIdAndRegion", () =>
+			getBrandUrlByBrandIdAndRegion(store, brandId, region),
+		),
+	createBrandUrl: (input) =>
+		wrapCacheOperation("createBrandUrl", () => createBrandUrl(store, input)),
 });
