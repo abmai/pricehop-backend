@@ -39,14 +39,21 @@ export const makePriceLookup = (convexClient: ConvexClientService): PriceLookupA
 				productUrl: product.normalizedUrl,
 				brand: product.brand,
 				productName: product.productName,
-				prices: prices.map((price) => ({
-					region: price.region,
-					currency: price.currency,
-					localPrice: price.localPrice,
-					usdPrice: price.usdPrice,
-					exchangeRate: price.exchangeRate,
-					confidence: price.confidence,
-				})),
+				prices: prices.map((price) =>
+					price.status === "unavailable"
+						? {
+								region: price.region,
+								status: "unavailable" as const,
+							}
+						: {
+								region: price.region,
+								currency: price.currency,
+								localPrice: price.localPrice,
+								usdPrice: price.usdPrice,
+								exchangeRate: price.exchangeRate,
+								confidence: price.confidence,
+							},
+				),
 				fetchedAt,
 			};
 		}),

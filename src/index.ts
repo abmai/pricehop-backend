@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 
 import type { InMemoryConvexStore } from "../convex/store";
-import { createAppRuntime } from "./layers";
+import { createAppRuntime, type AppEnvironmentOptions } from "./layers";
 import { createPricesRouter } from "./routes/prices";
 
-export interface CreateAppOptions {
+export interface CreateAppOptions extends AppEnvironmentOptions {
 	store?: InMemoryConvexStore;
 }
 

@@ -25,3 +25,14 @@ export class CacheError extends Data.TaggedError("CacheError")<{
 	readonly operation: string;
 	readonly cause: unknown;
 }> {}
+
+export class ScrapingError extends Data.TaggedError("ScrapingError")<{
+	readonly url: string;
+	readonly cause: unknown;
+}> {}
+
+export class ExtractionError extends Data.TaggedError("ExtractionError")<{
+	readonly url: string;
+	readonly reason: string;
+	readonly cause?: unknown;
+}> {}

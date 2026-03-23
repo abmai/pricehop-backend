@@ -42,3 +42,17 @@ export const getOrCreateProduct = (
 	store.products.push(product);
 	return product;
 };
+
+export const updateProductName = (
+	store: InMemoryConvexStore,
+	id: string,
+	productName: string,
+): ProductRecord | undefined => {
+	const product = getProductById(store, id);
+	if (!product) {
+		return undefined;
+	}
+
+	product.productName = productName;
+	return product;
+};

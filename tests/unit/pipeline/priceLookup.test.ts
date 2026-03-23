@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { Effect } from "effect";
 
 import { getOrCreateProduct } from "../../../convex/products";
 import { upsertPrices } from "../../../convex/prices";
@@ -6,6 +7,11 @@ import { createInMemoryConvexStore } from "../../../convex/store";
 import { ALL_SUPPORTED_REGIONS } from "../../../src/domain/regions";
 import { createAppRuntime } from "../../../src/layers";
 import { priceLookup } from "../../../src/pipeline/priceLookup";
+import type { IndexingDispatcherApi } from "../../../src/services/IndexingWorker";
+
+const NoopDispatcher: IndexingDispatcherApi = {
+	dispatch: () => Effect.void,
+};
 
 describe("priceLookup pipeline", () => {
 	test("returns complete when fresh cached prices exist", async () => {
@@ -28,7 +34,7 @@ describe("priceLookup pipeline", () => {
 			},
 		]);
 
-		const runtime = createAppRuntime({ store });
+		const runtime = createAppRuntime({ store, indexingDispatcher: NoopDispatcher });
 		const result = await runtime.runPromise(priceLookup(product.rawUrl));
 
 		expect(result.status).toBe("complete");
@@ -57,7 +63,7 @@ describe("priceLookup pipeline", () => {
 			},
 		]);
 
-		const runtime = createAppRuntime({ store });
+		const runtime = createAppRuntime({ store, indexingDispatcher: NoopDispatcher });
 		const result = await runtime.runPromise(priceLookup(product.rawUrl));
 
 		expect(result.status).toBe("indexing");
@@ -68,7 +74,7 @@ describe("priceLookup pipeline", () => {
 
 	test("reuses an existing active job for repeated lookups", async () => {
 		const store = createInMemoryConvexStore();
-		const runtime = createAppRuntime({ store });
+		const runtime = createAppRuntime({ store, indexingDispatcher: NoopDispatcher });
 		const rawUrl = "https://www.on.com/en-us/products/cloudmonster-123?utm_id=1";
 
 		const first = await runtime.runPromise(priceLookup(rawUrl));

@@ -31,6 +31,22 @@ export interface UnavailablePrice {
 
 export type PriceEntry = AvailablePrice | UnavailablePrice;
 
+export interface RawPageResult {
+	url: string;
+	html: string;
+	statusCode: number;
+	fetchedAt: string;
+}
+
+export interface ExtractedPriceData {
+	productName?: string;
+	sku?: string;
+	localPrice?: number;
+	currency?: CurrencyCode;
+	available: boolean;
+	confidence: PriceConfidence;
+}
+
 export interface ProductSnapshot {
 	productId: string;
 	productUrl: string;

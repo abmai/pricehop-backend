@@ -11,9 +11,10 @@ export interface ProductRecord {
 	createdAt: string;
 }
 
-export interface StoredPriceRecord {
+export interface StoredAvailablePriceRecord {
 	productId: string;
 	region: Region;
+	status?: "available";
 	currency: CurrencyCode;
 	localPrice: number;
 	usdPrice: number;
@@ -21,6 +22,16 @@ export interface StoredPriceRecord {
 	confidence: PriceConfidence;
 	fetchedAt: string;
 }
+
+export interface StoredUnavailablePriceRecord {
+	productId: string;
+	region: Region;
+	status: "unavailable";
+	confidence: PriceConfidence;
+	fetchedAt: string;
+}
+
+export type StoredPriceRecord = StoredAvailablePriceRecord | StoredUnavailablePriceRecord;
 
 export interface IndexingJobRecord {
 	id: string;

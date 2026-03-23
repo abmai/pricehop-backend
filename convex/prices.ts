@@ -1,7 +1,13 @@
-import type { StoredPriceRecord } from "./schema";
+import type {
+	StoredAvailablePriceRecord,
+	StoredPriceRecord,
+	StoredUnavailablePriceRecord,
+} from "./schema";
 import type { InMemoryConvexStore } from "./store";
 
-export type UpsertPriceInput = Omit<StoredPriceRecord, "productId">;
+export type UpsertPriceInput =
+	| Omit<StoredAvailablePriceRecord, "productId">
+	| Omit<StoredUnavailablePriceRecord, "productId">;
 
 export const getPricesByProductId = (
 	store: InMemoryConvexStore,
@@ -21,10 +27,19 @@ export const upsertPrices = (
 			(stored) => stored.productId === productId && stored.region === price.region,
 		);
 
-		const nextRecord: StoredPriceRecord = {
-			productId,
-			...price,
-		};
+		const nextRecord: StoredPriceRecord =
+			price.status === "unavailable"
+				? {
+						productId,
+						region: price.region,
+						status: "unavailable",
+						confidence: price.confidence,
+						fetchedAt: price.fetchedAt,
+					}
+				: {
+						productId,
+						...price,
+					};
 
 		if (existingIndex >= 0) {
 			store.prices[existingIndex] = nextRecord;
