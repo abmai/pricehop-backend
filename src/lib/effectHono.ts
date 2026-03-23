@@ -14,6 +14,8 @@ const getHttpStatus = (tag: string): StatusCode => {
 		case "ProductNotFoundError":
 			return 404;
 		case "ExchangeRateError":
+		case "ScrapingError":
+		case "ExtractionError":
 			return 502;
 		case "CacheError":
 		default:

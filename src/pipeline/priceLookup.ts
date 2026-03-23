@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import { BrandDetector } from "../services/BrandDetector";
 import { IndexingJobService } from "../services/IndexingJobService";
+import { IndexingDispatcher } from "../services/IndexingWorker";
 import { PriceLookup, isFresh } from "../services/PriceLookup";
 import { UrlNormalizer } from "../services/UrlNormalizer";
 
@@ -11,6 +12,7 @@ export const priceLookup = (rawUrl: string) =>
 		const detector = yield* BrandDetector;
 		const lookup = yield* PriceLookup;
 		const jobs = yield* IndexingJobService;
+		const dispatcher = yield* IndexingDispatcher;
 
 		const normalizedUrl = yield* normalizer.normalize(rawUrl);
 		const brand = yield* detector.detect(normalizedUrl);
@@ -32,6 +34,7 @@ export const priceLookup = (rawUrl: string) =>
 			rawUrl,
 			brand,
 		});
+		yield* dispatcher.dispatch(job.id);
 
 		return {
 			status: "indexing",

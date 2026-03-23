@@ -1,9 +1,15 @@
 import { describe, expect, test } from "bun:test";
+import { Effect } from "effect";
 
 import { getOrCreateProduct } from "../../convex/products";
 import { upsertPrices } from "../../convex/prices";
 import { createInMemoryConvexStore } from "../../convex/store";
 import { createApp } from "../../src/index";
+import type { IndexingDispatcherApi } from "../../src/services/IndexingWorker";
+
+const NoopDispatcher: IndexingDispatcherApi = {
+	dispatch: () => Effect.void,
+};
 
 describe("price lookup API", () => {
 	test("returns complete for fresh cached prices", async () => {
@@ -27,7 +33,7 @@ describe("price lookup API", () => {
 			},
 		]);
 
-		const app = createApp({ store });
+		const app = createApp({ store, indexingDispatcher: NoopDispatcher });
 		const response = await app.request("http://localhost/prices/lookup", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
@@ -43,7 +49,7 @@ describe("price lookup API", () => {
 
 	test("creates an indexing job and exposes its status", async () => {
 		const store = createInMemoryConvexStore();
-		const app = createApp({ store });
+		const app = createApp({ store, indexingDispatcher: NoopDispatcher });
 
 		const lookupResponse = await app.request("http://localhost/prices/lookup", {
 			method: "POST",

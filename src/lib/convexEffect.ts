@@ -5,11 +5,13 @@ import {
 	createIndexingJob,
 	findActiveIndexingJobByProductId,
 	getIndexingJobById,
+	updateIndexingJobStatus,
 } from "../../convex/indexingJobs";
 import {
 	findProductByNormalizedUrl,
 	getOrCreateProduct,
 	getProductById,
+	updateProductName,
 	type CreateProductInput,
 } from "../../convex/products";
 import { getPricesByProductId, upsertPrices, type UpsertPriceInput } from "../../convex/prices";
@@ -29,6 +31,10 @@ export interface ConvexClientService {
 	) => Effect.Effect<ProductRecord | undefined, CacheError>;
 	getProductById: (productId: string) => Effect.Effect<ProductRecord | undefined, CacheError>;
 	getOrCreateProduct: (input: CreateProductInput) => Effect.Effect<ProductRecord, CacheError>;
+	updateProductName: (
+		productId: string,
+		productName: string,
+	) => Effect.Effect<ProductRecord | undefined, CacheError>;
 	getPricesByProductId: (productId: string) => Effect.Effect<StoredPriceRecord[], CacheError>;
 	upsertPrices: (
 		productId: string,
@@ -42,6 +48,14 @@ export interface ConvexClientService {
 		regions: Region[],
 	) => Effect.Effect<IndexingJobRecord, CacheError>;
 	getIndexingJobById: (jobId: string) => Effect.Effect<IndexingJobRecord | undefined, CacheError>;
+	updateIndexingJobStatus: (
+		jobId: string,
+		status: IndexingJobRecord["status"],
+		options?: {
+			error?: string;
+			completedAt?: string;
+		},
+	) => Effect.Effect<IndexingJobRecord | undefined, CacheError>;
 	getExchangeRateByCurrency: (
 		currency: CurrencyCode,
 	) => Effect.Effect<ExchangeRateRecord | undefined, CacheError>;
@@ -71,6 +85,8 @@ export const makeInMemoryConvexClient = (
 		wrapCacheOperation("getProductById", () => getProductById(store, productId)),
 	getOrCreateProduct: (input) =>
 		wrapCacheOperation("getOrCreateProduct", () => getOrCreateProduct(store, input)),
+	updateProductName: (productId, productName) =>
+		wrapCacheOperation("updateProductName", () => updateProductName(store, productId, productName)),
 	getPricesByProductId: (productId) =>
 		wrapCacheOperation("getPricesByProductId", () => getPricesByProductId(store, productId)),
 	upsertPrices: (productId, prices) =>
@@ -83,6 +99,10 @@ export const makeInMemoryConvexClient = (
 		wrapCacheOperation("createIndexingJob", () => createIndexingJob(store, { productId, regions })),
 	getIndexingJobById: (jobId) =>
 		wrapCacheOperation("getIndexingJobById", () => getIndexingJobById(store, jobId)),
+	updateIndexingJobStatus: (jobId, status, options) =>
+		wrapCacheOperation("updateIndexingJobStatus", () =>
+			updateIndexingJobStatus(store, jobId, status, options),
+		),
 	getExchangeRateByCurrency: (currency) =>
 		wrapCacheOperation("getExchangeRateByCurrency", () =>
 			getExchangeRateByCurrency(store, currency),
