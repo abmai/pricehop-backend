@@ -16,6 +16,7 @@ YYYY-MM-DD-descriptive-name.md
 ```
 
 Examples:
+
 - `2026-03-22-api-design.md`
 - `2026-03-22-checkout-flow.md`
 
