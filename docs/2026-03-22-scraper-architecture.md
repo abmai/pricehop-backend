@@ -27,7 +27,8 @@ and persists the updated product snapshot.
   - Uses the manually maintained regional site schema to map a canonical product
     URL to a region-specific product URL.
 - `PageFetcher`
-  - Fetches HTML through Steel when `STEEL_API_KEY` is configured.
+  - Fetches HTML through Bright Data Web Unlocker when
+    `BRIGHTDATA_API_KEY` is configured.
   - Falls back to a direct HTTP fetcher locally so the app remains runnable
     without cloud browser credentials.
 - `PriceExtractor`
@@ -114,4 +115,4 @@ while supporting the actual scraper lifecycle in tests and local development.
 
 The runtime is still assembled with Effect layers. Page fetchers, extractors,
 and dispatchers can be overridden in tests, which keeps the end-to-end flow
-deterministic without requiring live Steel or OpenRouter credentials.
+deterministic without requiring live Bright Data or OpenRouter credentials.
