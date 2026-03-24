@@ -1,5 +1,4 @@
 import { Context, Effect, Layer } from "effect";
-import Steel from "steel-sdk";
 
 import { ScrapingError } from "../domain/errors";
 import type { RawPageResult } from "../domain/types";
@@ -52,39 +51,72 @@ export class HttpPageFetcher implements PageFetcherApi {
 	}
 }
 
-export class SteelPageFetcher implements PageFetcherApi {
-	private readonly client: Steel;
+interface BrightDataResponseEnvelope {
+	status_code?: number;
+	body?: string;
+}
 
+const readBrightDataResponse = async (
+	response: Response,
+): Promise<Pick<RawPageResult, "html" | "statusCode">> => {
+	if (!response.ok) {
+		throw new Error(`Bright Data request failed with status ${response.status}.`);
+	}
+
+	const contentType = response.headers.get("content-type") ?? "";
+
+	if (contentType.includes("application/json")) {
+		const payload = (await response.json()) as BrightDataResponseEnvelope;
+		if (!payload.body) {
+			throw new Error("Bright Data returned no HTML content.");
+		}
+
+		return {
+			html: payload.body,
+			statusCode: payload.status_code ?? response.status,
+		};
+	}
+
+	const html = await response.text();
+	if (!html) {
+		throw new Error("Bright Data returned no HTML content.");
+	}
+
+	return {
+		html,
+		statusCode: response.status,
+	};
+};
+
+export class BrightDataPageFetcher implements PageFetcherApi {
 	constructor(
 		private readonly apiKey: string,
-		private readonly baseURL = Bun.env.STEEL_BASE_URL,
-	) {
-		this.client = new Steel({
-			steelAPIKey: apiKey,
-			baseURL,
-		});
-	}
+		private readonly zone: string,
+		private readonly fetchImpl: typeof fetch = fetch,
+	) {}
 
 	fetchPage(url: string): Effect.Effect<RawPageResult, ScrapingError> {
 		return Effect.tryPromise({
 			try: async () => {
-				const response = await this.client.scrape({
-					url,
-					format: ["html"],
-					useProxy: true,
-					delay: 1500,
+				const response = await this.fetchImpl("https://api.brightdata.com/request", {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${this.apiKey}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						zone: this.zone,
+						url,
+						format: "raw",
+					}),
 				});
-
-				const html = response.content.html ?? response.content.cleaned_html;
-				if (!html) {
-					throw new Error("Steel returned no HTML content.");
-				}
+				const page = await readBrightDataResponse(response);
 
 				return {
 					url,
-					html,
-					statusCode: response.metadata.statusCode,
-					fetchedAt: response.metadata.timestamp ?? new Date().toISOString(),
+					html: page.html,
+					statusCode: page.statusCode,
+					fetchedAt: new Date().toISOString(),
 				};
 			},
 			catch: (cause) => toScrapingError(url, cause),
@@ -137,8 +169,17 @@ export class MockPageFetcher implements PageFetcherApi {
 	}
 }
 
-export const makePageFetcher = (): PageFetcherApi =>
-	Bun.env.STEEL_API_KEY ? new SteelPageFetcher(Bun.env.STEEL_API_KEY) : new HttpPageFetcher();
+export const makePageFetcher = (
+	env: Record<string, string | undefined> = Bun.env,
+	fetchImpl: typeof fetch = fetch,
+): PageFetcherApi =>
+	env.BRIGHTDATA_API_KEY
+		? new BrightDataPageFetcher(
+				env.BRIGHTDATA_API_KEY,
+				env.BRIGHTDATA_ZONE ?? "web_unlocker1",
+				fetchImpl,
+			)
+		: new HttpPageFetcher();
 
 export const PageFetcherLive = Layer.succeed(PageFetcher, makePageFetcher());
 
