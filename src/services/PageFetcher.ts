@@ -56,6 +56,34 @@ interface BrightDataResponseEnvelope {
 	body?: string;
 }
 
+interface BrightDataRequestBody {
+	zone: string;
+	url: string;
+	format: "raw";
+	headers?: Record<string, string>;
+}
+
+const makeBrightDataRequestBody = (
+	zone: string,
+	url: string,
+	options?: FetchPageOptions,
+): BrightDataRequestBody => {
+	const headers = options?.waitSelector
+		? {
+				"x-unblock-expect": JSON.stringify({
+					element: options.waitSelector,
+				}),
+			}
+		: undefined;
+
+	return {
+		zone,
+		url,
+		format: "raw",
+		...(headers ? { headers } : {}),
+	};
+};
+
 const readBrightDataResponse = async (
 	response: Response,
 ): Promise<Pick<RawPageResult, "html" | "statusCode">> => {
@@ -95,7 +123,7 @@ export class BrightDataPageFetcher implements PageFetcherApi {
 		private readonly fetchImpl: typeof fetch = fetch,
 	) {}
 
-	fetchPage(url: string): Effect.Effect<RawPageResult, ScrapingError> {
+	fetchPage(url: string, options?: FetchPageOptions): Effect.Effect<RawPageResult, ScrapingError> {
 		return Effect.tryPromise({
 			try: async () => {
 				const response = await this.fetchImpl("https://api.brightdata.com/request", {
@@ -104,11 +132,7 @@ export class BrightDataPageFetcher implements PageFetcherApi {
 						Authorization: `Bearer ${this.apiKey}`,
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({
-						zone: this.zone,
-						url,
-						format: "raw",
-					}),
+					body: JSON.stringify(makeBrightDataRequestBody(this.zone, url, options)),
 				});
 				const page = await readBrightDataResponse(response);
 
@@ -169,17 +193,26 @@ export class MockPageFetcher implements PageFetcherApi {
 	}
 }
 
+const readConfiguredValue = (value: string | undefined) => {
+	const trimmed = value?.trim();
+
+	return trimmed ? trimmed : undefined;
+};
+
+const getBrightDataUnlockerZone = (env: Record<string, string | undefined>) =>
+	readConfiguredValue(env.BRIGHTDATA_WEB_UNLOCKER_ZONE) ?? readConfiguredValue(env.BRIGHTDATA_ZONE);
+
 export const makePageFetcher = (
 	env: Record<string, string | undefined> = Bun.env,
 	fetchImpl: typeof fetch = fetch,
-): PageFetcherApi =>
-	env.BRIGHTDATA_API_KEY
-		? new BrightDataPageFetcher(
-				env.BRIGHTDATA_API_KEY,
-				env.BRIGHTDATA_ZONE ?? "web_unlocker1",
-				fetchImpl,
-			)
+): PageFetcherApi => {
+	const apiKey = readConfiguredValue(env.BRIGHTDATA_API_KEY);
+	const zone = getBrightDataUnlockerZone(env);
+
+	return apiKey && zone
+		? new BrightDataPageFetcher(apiKey, zone, fetchImpl)
 		: new HttpPageFetcher();
+};
 
 export const PageFetcherLive = Layer.succeed(PageFetcher, makePageFetcher());
 

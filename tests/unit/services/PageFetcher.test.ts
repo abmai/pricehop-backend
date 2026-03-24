@@ -47,16 +47,48 @@ describe("PageFetcher", () => {
 		expect(Number.isNaN(Date.parse(result.fetchedAt))).toBe(false);
 	});
 
-	test("uses the default Bright Data zone when only the API key is configured", async () => {
+	test("adds an expect header when a wait selector is provided", async () => {
+		let requestBody: Record<string, unknown> | undefined;
+		const fetcher = new BrightDataPageFetcher("api-key", "unlocker-zone", (async (_input, init) => {
+			requestBody = JSON.parse(String(init?.body));
+
+			return new Response("<html><body>ready</body></html>", {
+				status: 200,
+				headers: {
+					"content-type": "text/html",
+				},
+			});
+		}) as typeof fetch);
+
+		await Effect.runPromise(
+			fetcher.fetchPage("https://example.com/product", {
+				waitSelector: ".product-price",
+			}),
+		);
+
+		expect(requestBody).toEqual({
+			zone: "unlocker-zone",
+			url: "https://example.com/product",
+			format: "raw",
+			headers: {
+				"x-unblock-expect": JSON.stringify({
+					element: ".product-price",
+				}),
+			},
+		});
+	});
+
+	test("uses the explicit Bright Data Unlocker zone when configured", async () => {
 		let requestBody: Record<string, string> | undefined;
 		const fetcher = makePageFetcher(
 			{
 				BRIGHTDATA_API_KEY: "api-key",
+				BRIGHTDATA_WEB_UNLOCKER_ZONE: "unlocker-zone",
 			},
 			(async (_input, init) => {
 				requestBody = JSON.parse(String(init?.body));
 
-				return new Response("<html><body>default-zone</body></html>", {
+				return new Response("<html><body>unlocker-zone</body></html>", {
 					status: 200,
 					headers: {
 						"content-type": "text/html",
@@ -67,15 +99,78 @@ describe("PageFetcher", () => {
 
 		expect(fetcher).toBeInstanceOf(BrightDataPageFetcher);
 
-		const result = await Effect.runPromise(fetcher.fetchPage("https://example.com/default-zone"));
+		const result = await Effect.runPromise(fetcher.fetchPage("https://example.com/product"));
 
 		expect(requestBody).toEqual({
-			zone: "web_unlocker1",
-			url: "https://example.com/default-zone",
+			zone: "unlocker-zone",
+			url: "https://example.com/product",
 			format: "raw",
 		});
 		expect(result.statusCode).toBe(200);
-		expect(result.html).toBe("<html><body>default-zone</body></html>");
+		expect(result.html).toBe("<html><body>unlocker-zone</body></html>");
+	});
+
+	test("falls back to the legacy Bright Data zone env var", async () => {
+		let requestBody: Record<string, string> | undefined;
+		const fetcher = makePageFetcher(
+			{
+				BRIGHTDATA_API_KEY: "api-key",
+				BRIGHTDATA_ZONE: "legacy-zone",
+			},
+			(async (_input, init) => {
+				requestBody = JSON.parse(String(init?.body));
+
+				return new Response("<html><body>legacy-zone</body></html>", {
+					status: 200,
+					headers: {
+						"content-type": "text/html",
+					},
+				});
+			}) as typeof fetch,
+		);
+
+		expect(fetcher).toBeInstanceOf(BrightDataPageFetcher);
+
+		const result = await Effect.runPromise(fetcher.fetchPage("https://example.com/product"));
+
+		expect(requestBody).toEqual({
+			zone: "legacy-zone",
+			url: "https://example.com/product",
+			format: "raw",
+		});
+		expect(result.statusCode).toBe(200);
+		expect(result.html).toBe("<html><body>legacy-zone</body></html>");
+	});
+
+	test("treats blank explicit zone values as unset and falls back to the legacy env var", async () => {
+		let requestBody: Record<string, string> | undefined;
+		const fetcher = makePageFetcher(
+			{
+				BRIGHTDATA_API_KEY: " api-key ",
+				BRIGHTDATA_WEB_UNLOCKER_ZONE: "   ",
+				BRIGHTDATA_ZONE: " legacy-zone ",
+			},
+			(async (_input, init) => {
+				requestBody = JSON.parse(String(init?.body));
+
+				return new Response("<html><body>legacy-zone</body></html>", {
+					status: 200,
+					headers: {
+						"content-type": "text/html",
+					},
+				});
+			}) as typeof fetch,
+		);
+
+		expect(fetcher).toBeInstanceOf(BrightDataPageFetcher);
+
+		await Effect.runPromise(fetcher.fetchPage("https://example.com/product"));
+
+		expect(requestBody).toEqual({
+			zone: "legacy-zone",
+			url: "https://example.com/product",
+			format: "raw",
+		});
 	});
 
 	test("returns a ScrapingError when Bright Data rejects the request", async () => {
@@ -102,8 +197,10 @@ describe("PageFetcher", () => {
 		}
 	});
 
-	test("falls back to direct HTTP fetching when Bright Data is not configured", () => {
-		const fetcher = makePageFetcher({});
+	test("falls back to direct HTTP fetching when the Unlocker zone is missing", () => {
+		const fetcher = makePageFetcher({
+			BRIGHTDATA_API_KEY: "   ",
+		});
 
 		expect(fetcher).toBeInstanceOf(HttpPageFetcher);
 	});
