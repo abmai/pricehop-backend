@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan With Claude"
+  short_description: "Iterate plans with Claude review"
+  default_prompt: "Use $plan-with-claude to turn this task into a reviewed execution plan with iterative Claude CLI feedback."
