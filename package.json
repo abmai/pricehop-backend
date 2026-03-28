@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "start": "bun src/index.ts",
-    "test": "bun test",
+    "dev": "doppler run --project pricehop-backend --config dev -- bun --watch src/index.ts",
+    "start": "doppler run --project pricehop-backend --config dev -- bun src/index.ts",
+    "test": "doppler run --project pricehop-backend --config dev -- bun test",
     "lint": "oxlint convex src tests",
     "format": "oxfmt --write convex src tests docs",
     "typecheck": "tsgo --noEmit"
