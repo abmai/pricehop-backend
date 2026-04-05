@@ -12,6 +12,7 @@ export interface ProductRecord {
 	normalizedUrl: string;
 	brand: Brand;
 	productName?: string;
+	skus?: string;
 	rawUrl: string;
 	createdAt: string;
 }
@@ -112,6 +113,7 @@ export default defineSchema({
 		normalizedUrl: v.string(),
 		brand: v.string(),
 		productName: v.optional(v.string()),
+		skus: v.optional(v.string()),
 		rawUrl: v.string(),
 		createdAt: v.string(),
 	}).index("by_normalized_url", ["normalizedUrl"]),

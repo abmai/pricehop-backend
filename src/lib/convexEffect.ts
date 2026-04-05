@@ -25,7 +25,9 @@ import {
 	getOrCreateProduct,
 	getProductById,
 	updateProductName,
+	updateProduct,
 	type CreateProductInput,
+	type UpdateProductInput,
 } from "../../convex/products";
 import { getPricesByProductId, upsertPrices, type UpsertPriceInput } from "../../convex/prices";
 import { createInMemoryConvexStore, type InMemoryConvexStore } from "../../convex/store";
@@ -49,6 +51,10 @@ export interface ConvexClientService {
 	updateProductName: (
 		productId: string,
 		productName: string,
+	) => Effect.Effect<ProductRecord | undefined, CacheError>;
+	updateProduct: (
+		productId: string,
+		updates: UpdateProductInput,
 	) => Effect.Effect<ProductRecord | undefined, CacheError>;
 	getPricesByProductId: (productId: string) => Effect.Effect<StoredPriceRecord[], CacheError>;
 	upsertPrices: (
@@ -112,6 +118,8 @@ export const makeInMemoryConvexClient = (
 		wrapCacheOperation("getOrCreateProduct", () => getOrCreateProduct(store, input)),
 	updateProductName: (productId, productName) =>
 		wrapCacheOperation("updateProductName", () => updateProductName(store, productId, productName)),
+	updateProduct: (productId, updates) =>
+		wrapCacheOperation("updateProduct", () => updateProduct(store, productId, updates)),
 	getPricesByProductId: (productId) =>
 		wrapCacheOperation("getPricesByProductId", () => getPricesByProductId(store, productId)),
 	upsertPrices: (productId, prices) =>

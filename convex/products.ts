@@ -43,6 +43,11 @@ export const getOrCreateProduct = (
 	return product;
 };
 
+export interface UpdateProductInput {
+	productName?: string;
+	skus?: string;
+}
+
 export const updateProductName = (
 	store: InMemoryConvexStore,
 	id: string,
@@ -54,5 +59,24 @@ export const updateProductName = (
 	}
 
 	product.productName = productName;
+	return product;
+};
+
+export const updateProduct = (
+	store: InMemoryConvexStore,
+	id: string,
+	updates: UpdateProductInput,
+): ProductRecord | undefined => {
+	const product = getProductById(store, id);
+	if (!product) {
+		return undefined;
+	}
+
+	if (updates.productName !== undefined) {
+		product.productName = updates.productName;
+	}
+	if (updates.skus !== undefined) {
+		product.skus = updates.skus;
+	}
 	return product;
 };

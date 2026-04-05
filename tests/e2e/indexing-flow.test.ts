@@ -1,8 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { createApp } from "../../src/index";
-import { MockPageFetcher } from "../../src/services/PageFetcher";
-import { MockPriceExtractor } from "../../src/services/PriceExtractor";
+import { MockScrapingBeeService } from "../../src/services/ScrapingBeeService";
 import { createInMemoryConvexStore } from "../../convex/store";
 
 const waitForJobCompletion = async (app: ReturnType<typeof createApp>, jobId: string) => {
@@ -25,25 +24,31 @@ describe("indexing flow", () => {
 		const store = createInMemoryConvexStore();
 		const app = createApp({
 			store,
-			pageFetcher: new MockPageFetcher({
-				fallback: (url) => `<html><body><h1>${url}</h1></body></html>`,
-			}),
-			priceExtractor: new MockPriceExtractor({
-				handler: (_html, context) =>
-					context.region === "US"
-						? {
-								productName: "Tiffany T Bracelet",
-								sku: "1366369751",
-								available: true,
-								localPrice: 2200,
-								currency: "USD",
-								confidence: "high",
-							}
-						: {
-								productName: "Tiffany T Bracelet",
-								available: false,
-								confidence: "medium",
-							},
+			scrapingBeeService: new MockScrapingBeeService({
+				extractFixtures: {
+					"https://www.tiffany.com/jewelry/bracelets/item-123.html": {
+						name: "Tiffany T Bracelet",
+						price: "$2,200.00",
+						currency: "USD",
+						skus: "1366369751",
+						countryCode: "US",
+						available: true,
+					},
+					"https://www.tiffany.ca/jewelry/bracelets/item-123.html": {
+						name: "Tiffany T Bracelet",
+						price: "C$3,050.00",
+						currency: "CAD",
+						skus: "1366369751",
+						countryCode: "CA",
+						available: false,
+					},
+				},
+				searchFallback: (_query, countryCode) => {
+					if (countryCode === "ca") {
+						return "https://www.tiffany.ca/jewelry/bracelets/item-123.html";
+					}
+					return null;
+				},
 			}),
 		});
 
