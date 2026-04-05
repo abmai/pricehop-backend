@@ -1,0 +1,194 @@
+<system_instruction>
+You are working inside Conductor, a Mac app that lets the user run many coding agents in parallel.
+Your work should take place in the /Users/abmai/conductor/workspaces/pricehop-backend/worcester directory (unless otherwise directed), which has been set up for you to work in.
+Each workspace has a .context directory (gitignored) where you can save files to collaborate with other agents.
+The target branch for this workspace is main. Use this for actions like creating new PRs, bisecting, etc., unless you're told otherwise.
+
+By default, the user will only see the last message that you send before stopping. Include all essential information in the last message. The intermediate messages will be collapsed and accessible by the user but not displayed by default.
+
+If the user asks you to work on several unrelated tasks, you can suggest they start new workspaces.
+Sometimes the user might send you a message they meant to send in a different workspace or a different chat. If something doesn't make sense in the context of your work, just ask. 
+If the user asks for help with Conductor, you can ask them to go to "Help -> Send Feedback" to get in touch with our team.
+</system_instruction>
+
+
+<system-instruction>
+To do immediately:
+
+Rename the branch using `git branch -m` as soon as possible. Do not check the current branch name.
+
+You may read user-provided attachments first if needed to understand the request. Otherwise, do this before using any skills or any other tools.
+
+Choosing a branch name: use concrete, specific language, avoid abstract nouns, and be concise (<30 characters). Use the prefix "abmai/" before the name.
+
+</system-instruction>
+
+/continuous-planning-with-review-agent use this skill with Codex as review agent to create a plan for the following:
+
+A. Remove the Brightdata implementation completely
+B. Integrate scrapingbee library (key is SCRAPINGBEE_API_KEY from doppler)
+
+The following flow:
+
+1. User inputs URL (example: https://www.tiffany.com/jewelry/bracelets/tiffany-t-18k-yellow-gold-bracelets-1366369751.html)
+2. We scrape to get the name, price, and SKUs using this code snippet as an example:
+
+```
+// npm install request
+// npm install request-promise
+var rp = require('request-promise');
+const options = {
+    uri: 'https://app.scrapingbee.com/api/v1',
+    qs: {
+        "api_key": "REDACTED",
+        "url": "https://www.tiffany.com/jewelry/bracelets/tiffany-t-18k-yellow-gold-bracelets-1366369751.html",
+        "render_js": "false",
+        "ai_extract_rules": "{\"name\":\"name of item\",\"price\":\"price of item\",\"skus\":\"skus of product\",\"country\":\"current country of product website\"}"
+    }
+};
+rp(options).then(response => {
+    console.log(response);
+}).catch(error => {
+    console.log(error);
+})
+```
+
+3. With the country, name, price, and SKUs, along with URL, store in convex if we don't have it
+4. Concatenate "name, price, SKUs" into a single search string, then FOR EACH country we have available for the brand (or provided, make this a helper function), do the following
+
+4.a. Search using scrapingbee API and get the first URL returned using the following snippet (country code should match the country we're trying for). Disregard any error return by this API.
+
+```
+// npm install request
+// npm install request-promise
+var rp = require('request-promise');
+const options = {
+    uri: 'https://app.scrapingbee.com/api/v1/fast_search',
+    qs: {
+        "api_key": "REDACTED",
+        "search": "Tiffany T Wire Bracelet in Yellow Gold SKU 33263503, 33419066 japanese price",
+        "country_code": "jp"
+    }
+};
+rp(options).then(response => {
+    console.log(response);
+}).catch(error => {
+    console.log(error);
+})
+```
+
+4.b WIth the URL, complete step 1 and 2 above to get the name, price, SKUs for that URL and add to database for that country
+
+---
+
+<task-notification>
+<task-id>bder997mq</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/bder997mq.output</output-file>
+<status>completed</status>
+<summary>Background command "Check if Codex CLI is installed" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/bder997mq.output
+
+---
+
+<task-notification>
+<task-id>bx9ab2h6y</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/bx9ab2h6y.output</output-file>
+<status>completed</status>
+<summary>Background command "Send plan to Codex for round 1 review" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/bx9ab2h6y.output
+
+---
+
+<task-notification>
+<task-id>b0zby79qi</task-id>
+<tool-use-id>toolu_014sweQPu6QndHs5ZB5U26Ft</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/b0zby79qi.output</output-file>
+<status>completed</status>
+<summary>Background command "Send plan to Codex for round 2 review" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/b0zby79qi.output
+
+---
+
+<task-notification>
+<task-id>bb787lrv0</task-id>
+<tool-use-id>toolu_01GmbVked7GqR411VUg3BdeF</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/bb787lrv0.output</output-file>
+<status>completed</status>
+<summary>Background command "Send plan to Codex for round 3 review" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/bb787lrv0.output
+
+---
+
+<task-notification>
+<task-id>b5xqx83hp</task-id>
+<tool-use-id>toolu_01FFbo9HYjTpUdd4VSWWxJ95</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/b5xqx83hp.output</output-file>
+<status>completed</status>
+<summary>Background command "Send plan to Codex for round 4 review" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/b5xqx83hp.output
+
+---
+
+<task-notification>
+<task-id>bj0rbu6fx</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/bj0rbu6fx.output</output-file>
+<status>completed</status>
+<summary>Background command "Send plan to Codex for round 6 review" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/bj0rbu6fx.output
+
+---
+
+<task-notification>
+<task-id>b26slpcvv</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/b26slpcvv.output</output-file>
+<status>completed</status>
+<summary>Background command "Send plan to Codex for round 7 review" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/b26slpcvv.output
+
+---
+
+<task-notification>
+<task-id>blx4yzfev</task-id>
+<tool-use-id>toolu_019do9LMWx2pCmHyc2bvrWpx</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/blx4yzfev.output</output-file>
+<status>completed</status>
+<summary>Background command "Send plan to Codex for round 8 review" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/blx4yzfev.output
+
+---
+
+<task-notification>
+<task-id>b5iyrhwvt</task-id>
+<tool-use-id>toolu_01XWNxDytF9daatJ7TC9t2G4</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/b5iyrhwvt.output</output-file>
+<status>completed</status>
+<summary>Background command "Send plan to Codex for round 9 review" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/b5iyrhwvt.output
+
+---
+
+<task-notification>
+<task-id>b32g23bpl</task-id>
+<tool-use-id>toolu_01SNH7t5Pm6tzN7baX917gxo</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/b32g23bpl.output</output-file>
+<status>completed</status>
+<summary>Background command "Send plan to Codex for round 10 (final) review" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-abmai-conductor-workspaces-pricehop-backend-worcester/588daa88-e559-4f42-8194-947efc6a85c5/tasks/b32g23bpl.output
+
+---
+
+Verify the implementation again, tell me how I can test this

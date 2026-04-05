@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "4d7273ea4054",
+  "strategy": "manual-commit",
+  "branch": "abmai/scrapingbee-integration",
+  "checkpoints_count": 12,
+  "files_touched": [
+    ".env.example",
+    "convex/products.ts",
+    "convex/schema.ts",
+    "docs/2026-03-23-brightdata-unlocker-config.md",
+    "docs/2026-03-31-scrapingbee-integration.md",
+    "docs/user-flows/2026-03-23-brightdata-unlocker-configuration.md",
+    "docs/user-flows/2026-03-23-page-fetch-provider-selection.md",
+    "docs/user-flows/2026-03-31-scrapingbee-price-lookup.md",
+    "src/domain/CLAUDE.md",
+    "src/domain/regions.ts",
+    "src/layers.ts",
+    "src/lib/convexEffect.ts",
+    "src/lib/priceParser.ts",
+    "src/services/IndexingWorker.ts",
+    "src/services/PageFetcher.ts",
+    "src/services/ScrapingBeeService.ts",
+    "tests/e2e/indexing-flow.test.ts",
+    "tests/unit/lib/priceParser.test.ts",
+    "tests/unit/services/IndexingWorker.test.ts",
+    "tests/unit/services/PageFetcher.test.ts",
+    "tests/unit/services/ScrapingBeeService.test.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/4d/7273ea4054/0/metadata.json",
+      "transcript": "/4d/7273ea4054/0/full.jsonl",
+      "content_hash": "/4d/7273ea4054/0/content_hash.txt",
+      "prompt": "/4d/7273ea4054/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 756,
+    "cache_creation_tokens": 605192,
+    "cache_read_tokens": 20989686,
+    "output_tokens": 80534,
+    "api_call_count": 165
+  }
+}
