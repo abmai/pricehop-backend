@@ -16,6 +16,10 @@ import { createPageFetcherLayer, type PageFetcherApi } from "./services/PageFetc
 import { createPriceExtractorLayer, type PriceExtractorApi } from "./services/PriceExtractor";
 import { createPriceLookupLayer } from "./services/PriceLookup";
 import { createRegionResolverLayer, type RegionResolverApi } from "./services/RegionResolver";
+import {
+	createScrapingBeeServiceLayer,
+	type ScrapingBeeServiceApi,
+} from "./services/ScrapingBeeService";
 import { UrlNormalizerLive } from "./services/UrlNormalizer";
 
 export interface AppEnvironmentOptions {
@@ -24,6 +28,7 @@ export interface AppEnvironmentOptions {
 	priceExtractor?: PriceExtractorApi;
 	regionResolver?: RegionResolverApi;
 	indexingDispatcher?: IndexingDispatcherApi;
+	scrapingBeeService?: ScrapingBeeServiceApi;
 }
 
 export const makeAppLayer = (options: AppEnvironmentOptions = {}) => {
@@ -41,6 +46,7 @@ export const makeAppLayer = (options: AppEnvironmentOptions = {}) => {
 		createRegionResolverLayer(options.regionResolver, convexClient),
 		createPageFetcherLayer(options.pageFetcher),
 		createPriceExtractorLayer(options.priceExtractor),
+		createScrapingBeeServiceLayer(options.scrapingBeeService),
 	);
 	const workerLayer = Layer.provide(IndexingWorkerLive, baseLayer);
 	const dispatcherLayer = options.indexingDispatcher

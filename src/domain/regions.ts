@@ -40,3 +40,42 @@ export const REGION_TO_CURRENCY: Record<Region, CurrencyCode> = {
 	TW: "TWD",
 	US: "USD",
 };
+
+export const COUNTRY_CODE_TO_REGION: Record<string, Region | undefined> = {
+	AU: "AU",
+	CA: "CA",
+	CN: "CN",
+	HK: "HK",
+	KR: "KR",
+	PH: "PH",
+	SG: "SG",
+	TH: "TH",
+	TW: "TW",
+	US: "US",
+};
+
+export const REGION_TO_COUNTRY_CODE: Record<Region, string> = {
+	AU: "au",
+	CA: "ca",
+	CN: "cn",
+	HK: "hk",
+	KR: "kr",
+	PH: "ph",
+	SG: "sg",
+	TH: "th",
+	TW: "tw",
+	US: "us",
+};
+
+export const REGION_TO_COUNTRY_NAME: Record<Region, string> = {
+	AU: "australian",
+	CA: "canadian",
+	CN: "chinese",
+	HK: "hong kong",
+	KR: "korean",
+	PH: "philippine",
+	SG: "singapore",
+	TH: "thai",
+	TW: "taiwanese",
+	US: "american",
+};

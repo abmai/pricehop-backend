@@ -51,107 +51,6 @@ export class HttpPageFetcher implements PageFetcherApi {
 	}
 }
 
-interface BrightDataResponseEnvelope {
-	status_code?: number;
-	body?: string;
-}
-
-interface BrightDataRequestBody {
-	zone: string;
-	url: string;
-	format: "raw";
-	headers?: Record<string, string>;
-}
-
-const makeBrightDataRequestBody = (
-	zone: string,
-	url: string,
-	options?: FetchPageOptions,
-): BrightDataRequestBody => {
-	const headers = options?.waitSelector
-		? {
-				"x-unblock-expect": JSON.stringify({
-					element: options.waitSelector,
-				}),
-			}
-		: undefined;
-
-	return {
-		zone,
-		url,
-		format: "raw",
-		...(headers ? { headers } : {}),
-	};
-};
-
-const readBrightDataResponse = async (
-	response: Response,
-): Promise<Pick<RawPageResult, "html" | "statusCode">> => {
-	if (!response.ok) {
-		throw new Error(`Bright Data request failed with status ${response.status}.`);
-	}
-
-	const contentType = response.headers.get("content-type") ?? "";
-
-	if (contentType.includes("application/json")) {
-		const payload = (await response.json()) as BrightDataResponseEnvelope;
-		if (!payload.body) {
-			throw new Error("Bright Data returned no HTML content.");
-		}
-
-		return {
-			html: payload.body,
-			statusCode: payload.status_code ?? response.status,
-		};
-	}
-
-	const html = await response.text();
-	if (!html) {
-		throw new Error("Bright Data returned no HTML content.");
-	}
-
-	return {
-		html,
-		statusCode: response.status,
-	};
-};
-
-export class BrightDataPageFetcher implements PageFetcherApi {
-	constructor(
-		private readonly apiKey: string,
-		private readonly zone: string,
-		private readonly fetchImpl: typeof fetch = fetch,
-	) {}
-
-	fetchPage(url: string, options?: FetchPageOptions): Effect.Effect<RawPageResult, ScrapingError> {
-		return Effect.tryPromise({
-			try: async () => {
-				const response = await this.fetchImpl("https://api.brightdata.com/request", {
-					method: "POST",
-					headers: {
-						Authorization: `Bearer ${this.apiKey}`,
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify(makeBrightDataRequestBody(this.zone, url, options)),
-				});
-				const page = await readBrightDataResponse(response);
-
-				return {
-					url,
-					html: page.html,
-					statusCode: page.statusCode,
-					fetchedAt: new Date().toISOString(),
-				};
-			},
-			catch: (cause) => toScrapingError(url, cause),
-		});
-	}
-
-	shutdown(): Effect.Effect<void> {
-		return Effect.void;
-	}
-}
-
 export interface MockPageFixture {
 	html: string;
 	statusCode?: number;
@@ -193,26 +92,7 @@ export class MockPageFetcher implements PageFetcherApi {
 	}
 }
 
-const readConfiguredValue = (value: string | undefined) => {
-	const trimmed = value?.trim();
-
-	return trimmed ? trimmed : undefined;
-};
-
-const getBrightDataUnlockerZone = (env: Record<string, string | undefined>) =>
-	readConfiguredValue(env.BRIGHTDATA_WEB_UNLOCKER_ZONE) ?? readConfiguredValue(env.BRIGHTDATA_ZONE);
-
-export const makePageFetcher = (
-	env: Record<string, string | undefined> = Bun.env,
-	fetchImpl: typeof fetch = fetch,
-): PageFetcherApi => {
-	const apiKey = readConfiguredValue(env.BRIGHTDATA_API_KEY);
-	const zone = getBrightDataUnlockerZone(env);
-
-	return apiKey && zone
-		? new BrightDataPageFetcher(apiKey, zone, fetchImpl)
-		: new HttpPageFetcher();
-};
+export const makePageFetcher = (): PageFetcherApi => new HttpPageFetcher();
 
 export const PageFetcherLive = Layer.succeed(PageFetcher, makePageFetcher());
 
